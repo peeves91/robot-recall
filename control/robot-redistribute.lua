@@ -1,11 +1,13 @@
 script.on_nth_tick(15, function(event)
-    for k, v in pairs(global.deploying) do
+    for k, v in pairs(storage.deploying) do
         if (v.deploying and v.ent.valid) then
             local inv = v.ent.get_inventory(1)
             if (not inv.is_empty()) then
                 local items = inv.get_contents()
-                for name, count in pairs(items) do
-                    local placeresult = game.item_prototypes[name].place_result
+                -- for name, count in pairs(items) do
+                for index, item in pairs(items) do
+                    name = item['name']
+                    local placeresult = prototypes.item[name].place_result
                     if (placeresult.type == "logistic-robot" or placeresult.type ==
                         "construction-robot") then
                         if (logisticNetworkHasItemSpace(v.ent.logistic_network, name)) then
@@ -27,18 +29,18 @@ end)
 
 script.on_event(defines.events.on_built_entity, function(event) 
 
-    if (event.created_entity.name == "robot-redistribute-chest") then
-        local entity = event.created_entity
-        global.deploying[entity.unit_number] = {ent = entity, deploying = false}
+    if (event.entity.name == "robot-redistribute-chest") then
+        local entity = event.entity
+        storage.deploying[entity.unit_number] = {ent = entity, deploying = false}
     end   
 
 end)
 
 script.on_event(defines.events.on_robot_built_entity, function(event) 
 
-    if (event.created_entity.name == "robot-redistribute-chest") then
-        local entity = event.created_entity
-        global.deploying[entity.unit_number] = {ent = entity, deploying = false}
+    if (event.entity.name == "robot-redistribute-chest") then
+        local entity = event.entity
+        storage.deploying[entity.unit_number] = {ent = entity, deploying = false}
     end   
 
 end)
@@ -70,8 +72,8 @@ function logisticNetworkHasItemSpace(logistic_network, itemname)
 end
 
 script.on_nth_tick(60, function(event)
-    for k, v in pairs(global.deploying) do
-        if (v.ent and not v.ent.valid) then table.remove(global.deploying, k) 
+    for k, v in pairs(storage.deploying) do
+        if (v.ent and not v.ent.valid) then table.remove(storage.deploying, k) 
         elseif (v.ent and not v.ent.get_inventory(1).is_empty()) then v.deploying = true 
         else v.deploying = false end
     end

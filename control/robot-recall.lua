@@ -9,7 +9,10 @@ function getAverage(items)
     return sum / count
 end
 
-function getItemProtoFromName(n) return game.item_prototypes[n] end
+function getItemProtoFromName(n)
+    local temp = prototypes.item[n]
+    return temp
+end
 
 function setGUISize(element, w, h)
     if (not element.style) then return end
@@ -53,7 +56,7 @@ end
 
 function getBotsBeingRecalled(recall_chest)
     local tbl = {}
-    for k, v in pairs(global.teleportQueue) do
+    for k, v in pairs(storage.teleportQueue) do
         if (tbl.destination == recall_chest) then
             tbl[v.itemname] =
                 tbl[v.itemname] and tbl[v.itemname] + v.count or v.count
@@ -91,9 +94,9 @@ function addToTeleportQueue(source, destination, itemstack)
         surface = destination.surface,
         count = itemstack.count
     }
-    table.insert(global.teleportQueue, queueEntry)
+    table.insert(storage.teleportQueue, queueEntry)
     itemstack.clear()
-    global.teleportQueueEntryCount = global.teleportQueueEntryCount + 1
+    storage.teleportQueueEntryCount = storage.teleportQueueEntryCount + 1
     -- local timeTo
 
 end
@@ -136,7 +139,7 @@ function buildRecallGui(baseGUI, entity)
     local ply = game.players[baseGUI.player_index]
     local res = ply.display_resolution
     local scl = ply.display_scale
-    global.openedGUIPlayers[baseGUI.player_index] =
+    storage.openedGUIPlayers[baseGUI.player_index] =
         {ply = game.players[baseGUI.player_index], ent = entity}
     recallFrame.location = {
         (res.width / 2) - (INV_DIMENSIONS.width * scl * 0.5) - WIDTH * scl,
@@ -224,7 +227,11 @@ function updateRecallGuiList(baseGui, robots, logistic_network)
     for k, v in pairs(robots) do updateRecallGuiListEntry(k, v.count, baseGui) end
 
     local count = table_size(robots)
-    if (count * 2 ~= table_size(scrollPane)) then
+    -- TODO swelter: figure out if table_size can be something other than 1
+    -- leaving this commented out for now, as i couldn't find a situation where it wasn't true in factorio 1.1.110
+    -- this is not to say there isn't an issue here, and this should be better understood what's supposed to happen here.
+    -- if (count * 2 ~= table_size(scrollPane)) then
+    if (true) then
         for k, v in pairs(baseGui['robot-recall-chest']['frame']['scrollpane']
                               .children) do
             if (v.valid and v.type == "flow" and not robots[v.name]) then
@@ -269,8 +276,8 @@ function updateRecallGuiListProgress(baseGui, robots, logistic_network)
             local itemname = string.sub(element.name, 0,
                                         -1 - string.len("-progressbar"))
             local totalProgress = {}
-            for k, v in pairs(global.teleportQueue) do
-                -- if (global.teleportQueue.destination) then
+            for k, v in pairs(storage.teleportQueue) do
+                -- if (storage.teleportQueue.destination) then
                 -- end
 
                 if (v.destination and v.destination.valid and ply.opened and
@@ -363,7 +370,7 @@ end
 
 function updateTeleportJobs(event)
     local warning = false
-    for k, e in ipairs(global.teleportQueue) do
+    for k, e in ipairs(storage.teleportQueue) do
         -- if (not itemstack.valid)
         if ((not e.destination or not e.destination.valid)) then
             -- game.print("Source or destination not valid! Removing queue item!")
@@ -382,8 +389,8 @@ function updateTeleportJobs(event)
             end
 
 
-            global.teleportQueue[k] = nil
-            global.teleportQueueEntryCount = global.teleportQueueEntryCount - 1
+            storage.teleportQueue[k] = nil
+            storage.teleportQueueEntryCount = storage.teleportQueueEntryCount - 1
 
         end
         if (event.tick >= e.endTick) then
@@ -443,13 +450,13 @@ function updateTeleportJobs(event)
                 end
             -- end
 
-            -- for _, v in pairs(global.openedGUIPlayers) do
+            -- for _, v in pairs(storage.openedGUIPlayers) do
             --     -- getAllIdleRobotsInNetwork(p.ply.opened)
             --     -- local robots = getAllIdleRobotsInNetwork(v.ent.logistic_network)
             --     -- updateRecallGuiList(v.ply.gui.screen, robots, v.ent.logistic_network)
             -- end
-            table.remove(global.teleportQueue, k)
-            global.teleportQueueEntryCount = global.teleportQueueEntryCount - 1
+            table.remove(storage.teleportQueue, k)
+            storage.teleportQueueEntryCount = storage.teleportQueueEntryCount - 1
         end
     end
 end
@@ -458,12 +465,12 @@ function initRecallChest(event) end
 
 script.on_event({defines.events.on_built_entity}, function(event)
     -- game.print("Hello!")
-    if (event.created_entity and event.created_entity.name ==
+    if (event.entity and event.entity.name ==
         "robot-recall-chest") then initRecallChest(event) end
 end)
 
 script.on_event({defines.events.on_robot_built_entity}, function(event)
-    if (event.created_entity and event.created_entity.name ==
+    if (event.entity and event.entity.name ==
         "robot-recall-chest") then initRecallChest(event) end
 end)
 
@@ -483,8 +490,8 @@ script.on_event({defines.events.on_gui_closed}, function(event)
     local ply = game.players[event.player_index]
     local gui = ply.gui.screen
     if (gui['robot-recall-chest'] ~= nil) then
-        if (global.openedGUIPlayers[event.player_index]) then
-            table.remove(global.openedGUIPlayers, event.player_index)
+        if (storage.openedGUIPlayers[event.player_index]) then
+            table.remove(storage.openedGUIPlayers, event.player_index)
         end
         gui['robot-recall-chest'].destroy()
     end
@@ -494,12 +501,11 @@ end)
 script.on_event({defines.events.on_gui_click}, function(event)
     -- game.print(event)
     local ply = game.players[event.player_index]
-    -- local items = game.item_prototypes
 
     if (event.element.type == "sprite-button" and ply.opened and ply.opened.name ==
         "robot-recall-chest") then
         local itemname = event.element.parent.name
-        local item = game.item_prototypes[itemname]
+        local item = prototypes.item[itemname]
         -- game.print('recalling "' .. itemname .. '"')
         callRobotsToEntity(ply.opened, ply.opened.logistic_network, item,
                            event.tick)
@@ -521,8 +527,8 @@ end)
 -- end
 -- end)
 -- script.on_event({defines.events.on_tick}, function(event)
---     if (global.teleportQueueEntryCount > 0) then
---         for k, v in pairs(global.openedGUIPlayers) do
+--     if (storage.teleportQueueEntryCount > 0) then
+--         for k, v in pairs(storage.openedGUIPlayers) do
 --             -- local  = v.gui.screen
 --             local gui = v.ply.gui.screen
 --             -- __DebugAdapter.print("Updating every tick!")
@@ -536,15 +542,15 @@ end)
 -- end)
 
 script.on_nth_tick(2, function(event)
-    if (not global.teleportQueueEntryCount or not global.teleportQueue) then return end
-    if (global.teleportQueueEntryCount == 0 and global.hasChanged) then
-        global.hasChanged = false
-        for k, v in pairs(global.openedGUIPlayers) do
+    if (not storage.teleportQueueEntryCount or not storage.teleportQueue) then return end
+    if (storage.teleportQueueEntryCount == 0 and storage.hasChanged) then
+        storage.hasChanged = false
+        for k, v in pairs(storage.openedGUIPlayers) do
             updateRecallGuiListProgress(v.ply.gui.screen)
         end
-    elseif (global.teleportQueueEntryCount > 0) then
-        global.hasChanged = true
-        for k, v in pairs(global.openedGUIPlayers) do
+    elseif (storage.teleportQueueEntryCount > 0) then
+        storage.hasChanged = true
+        for k, v in pairs(storage.openedGUIPlayers) do
             updateRecallGuiListProgress(v.ply.gui.screen)
         end
     end
@@ -552,12 +558,12 @@ script.on_nth_tick(2, function(event)
 end)
 
 script.on_nth_tick(10, function(event)
-    -- if (not global.teleportQueueEntryCount
-    if (global.teleportQueueEntryCount and global.teleportQueueEntryCount > 0) then updateTeleportJobs(event) end
+    -- if (not storage.teleportQueueEntryCount
+    if (storage.teleportQueueEntryCount and storage.teleportQueueEntryCount > 0) then updateTeleportJobs(event) end
 end)
 
 script.on_nth_tick(180, function(event)
-    for k, v in pairs(global.openedGUIPlayers) do
+    for k, v in pairs(storage.openedGUIPlayers) do
         -- __DebugAdapter.print("Updating every 10 ticks!")
 
         -- local  = v.gui.screen

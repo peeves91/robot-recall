@@ -1,11 +1,11 @@
 {
     "name": "robot-recall",
-    "version": "0.2.12",
-    "title": "Robot Recall",
-    "author": "343N",
-    "contact": "343N#6969",
-    "homepage": "http://github.com/343N/robot-recall",
-    "factorio_version": "0.18",
-    "dependencies": ["base >= 0.18"],
+    "version": "0.3.1",
+    "title": "Robot Recall V2",
+    "author": "peeves91",
+    "contact": "peeves91",
+    "homepage": "https://github.com/peeves91/robot-recall",
+    "factorio_version": "2.0",
+    "dependencies": ["base >= 2.0"],
     "description": "Lets you recall all robots in your network"
 }

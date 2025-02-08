@@ -4,11 +4,11 @@ require('control.robot-redistribute')
 -- require('')
 
 script.on_init(function(event)
-    global.teleportQueue = {}
-    global.teleportQueueEntryCount = 0
-    global.hasChanged = false
-    global.openedGUIPlayers = {}
-    global.deploying = {}
+    storage.teleportQueue = {}
+    storage.teleportQueueEntryCount = 0
+    storage.hasChanged = false
+    storage.openedGUIPlayers = {}
+    storage.deploying = {}
 end)
 
 script.on_configuration_changed(function(event)
@@ -16,18 +16,18 @@ script.on_configuration_changed(function(event)
         local old_ver = event.mod_changes['robot-recall'].old_version
         if (old_ver) then
             if (old_ver == "0.2.0" or string.find(old_ver, "0.1.")) then
-                global.teleportQueue = {}
-                global.teleportQueueEntryCount = 0
+                storage.teleportQueue = {}
+                storage.teleportQueueEntryCount = 0
             end
 
             if (old_ver == "0.2.0" or old_ver == "0.2.1") then
-                global.deploying = {}
+                storage.deploying = {}
                 for _, surface in pairs(game.surfaces) do
                     local deploymentstations =
                         surface.find_entities_filtered(
                             {name = "robot-redistribute-chest"})
                     for k, v in pairs(deploymentstations) do
-                        global.deploying[v.unit_number] =
+                        storage.deploying[v.unit_number] =
                             {ent = v, deploying = false}
                     end
                 end
@@ -37,7 +37,7 @@ script.on_configuration_changed(function(event)
                 new_ver == "0.2.3" or 
                 string.find(old_ver, "0.1.")) then 
                 local newTeleportQueue = {}
-                for k,e in pairs(global.teleportQueue) do
+                for k,e in pairs(storage.teleportQueue) do
                     local newEl = e
                     if (newEl.source and newEl.source.valid) then
                         newEl.srcPos = newEl.source.position
@@ -49,15 +49,15 @@ script.on_configuration_changed(function(event)
                     end
                     table.insert(newTeleportQueue, newEl)
                 end
-                global.teleportQueue = newTeleportQueue
-                global.teleportQueueEntryCount = table_size(newTeleportQueue)
+                storage.teleportQueue = newTeleportQueue
+                storage.teleportQueueEntryCount = table_size(newTeleportQueue)
             end
         end
     end
 
-    global.deploying = global.deploying or {}
-    global.teleportQueue = global.teleportQueue or {}
-    global.teleportQueueEntryCount = global.teleportQueueEntryCount or 0
-    global.hasChanged = global.hasChanged or false
-    global.openedGUIPlayers = global.openedGUIPlayers or {}
+    storage.deploying = storage.deploying or {}
+    storage.teleportQueue = storage.teleportQueue or {}
+    storage.teleportQueueEntryCount = storage.teleportQueueEntryCount or 0
+    storage.hasChanged = storage.hasChanged or false
+    storage.openedGUIPlayers = storage.openedGUIPlayers or {}
 end)

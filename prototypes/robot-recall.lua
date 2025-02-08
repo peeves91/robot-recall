@@ -2,7 +2,7 @@
 
 
 local entity = {}
-local baseEnt = data.raw["logistic-container"]["logistic-chest-passive-provider"]
+local baseEnt = data.raw["logistic-container"]["passive-provider-chest"]
 
 entity.name = "robot-recall-chest"
 entity.order = "logistic-container"
@@ -77,7 +77,7 @@ entity.flags = {"placeable-player", "player-creation"}
 
 
 
-local item = table.deepcopy(data.raw.item["logistic-chest-requester"])
+local item = table.deepcopy(data.raw.item["requester-chest"])
 item.name = "robot-recall-chest"
 -- item.entity = "robot-recall-chest"
 item.place_result = "robot-recall-chest"
@@ -88,10 +88,12 @@ item.icons = {
     },
 }
 
-local recipe = table.deepcopy(data.raw.recipe["logistic-chest-requester"])
+local recipe = table.deepcopy(data.raw.recipe["requester-chest"])
 recipe.enabled = false;
 recipe.name = "robot-recall-chest"
-recipe.result = "robot-recall-chest"
+recipe.results = {
+  {type="item", name="robot-recall-chest", amount=1}
+}
 
 table.insert(data.raw["technology"]["construction-robotics"].effects, {type="unlock-recipe", recipe="robot-recall-chest"})
 table.insert(data.raw["technology"]["logistic-robotics"].effects, {type="unlock-recipe", recipe="robot-recall-chest"})
